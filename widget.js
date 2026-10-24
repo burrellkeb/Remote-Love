@@ -7,11 +7,6 @@ const TZ = "America/Chicago";
 const SWITCH_HOUR = 22;            // 10 PM Central
 const HOUR = 3600 * 1000;
 
-const TOP_COLOR    = [255, 143, 177];
-const BOTTOM_COLOR = [224,  69, 123];
-const HEART_COLOR  = new Color("#FFFFFF");
-const TEXT_COLOR   = new Color("#FFFFFF");
-
 const fm = FileManager.local();
 const DIR = fm.documentsDirectory();
 const DATA_CACHE = fm.joinPath(DIR, "remote-love-compliments.js");
@@ -80,8 +75,22 @@ function entryFor(key, state) {
   return { special: false, text: state.showSecond ? e[1] : e[0] };
 }
 
-// ---------- Draw the card (used by widget and app screen) ----------
+// ---------- Draw the card: a little love letter ----------
+// (used by the widget and the app screen)
 const W = 1100, H = 520;
+const PAPER   = "#FFF8EE";   // cream stationery
+const ROSE    = "#C8385C";   // airmail stripe
+const BLUSH   = "#F4B6C2";   // airmail stripe
+const SEAL    = "#8E1B3A";   // wax
+const SEAL_LT = "#B23C5C";
+const SEAL_DK = "#5E0F25";
+const INK     = "#5A1A2E";   // compliment text
+const INK_RED = "#B0284F";   // "I love" + signature
+
+const SCRIPT = (s) => new Font("SnellRoundhand-Bold", s);
+const SERIF  = (s) => new Font("Georgia-Italic", s);
+
+const col = (h, a) => (a === undefined ? new Color(h) : new Color(h, a));
 
 function heartPath(x, y, w, h) {
   const sx = w / 100, sy = h / 90;
@@ -98,18 +107,76 @@ function heartPath(x, y, w, h) {
   return p;
 }
 
-const hex = (rgb) => "#" + rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+// Slightly irregular circle, like pressed wax
+function waxPoints(cx, cy, r) {
+  const pts = [];
+  const N = 72;
+  for (let k = 0; k < N; k++) {
+    const a = (k / N) * Math.PI * 2;
+    const rr = r * (1 + 0.045 * Math.sin(a * 7 + 0.6) + 0.025 * Math.cos(a * 13) + 0.015 * Math.sin(a * 23));
+    pts.push(new Point(cx + rr * Math.cos(a), cy + rr * Math.sin(a)));
+  }
+  return pts;
+}
 
-function sizeFor(text) {
+function fillPoly(ctx, pts, color) {
+  const p = new Path();
+  p.addLines(pts);
+  p.closeSubpath();
+  ctx.addPath(p);
+  ctx.setFillColor(col(color));
+  ctx.fillPath();
+}
+
+function drawSeal(ctx, cx, cy, r) {
+  // soft shadow
+  fillPoly(ctx, waxPoints(cx + 5, cy + 8, r).map((q) => q), SEAL_DK);
+  // wax body
+  fillPoly(ctx, waxPoints(cx, cy, r), SEAL);
+  // pressed inner ring
+  ctx.setStrokeColor(col(SEAL_LT));
+  ctx.setLineWidth(5);
+  ctx.strokeEllipse(new Rect(cx - r * 0.74, cy - r * 0.74, r * 1.48, r * 1.48));
+  // embossed heart: dark offset, then light face
+  const hw = r * 0.9, hh = hw * 0.9;
+  ctx.addPath(heartPath(cx - hw / 2 + 3, cy - hh / 2 + 6, hw, hh));
+  ctx.setFillColor(col(SEAL_DK));
+  ctx.fillPath();
+  ctx.addPath(heartPath(cx - hw / 2, cy - hh / 2 + 2, hw, hh));
+  ctx.setFillColor(col(SEAL_LT));
+  ctx.fillPath();
+}
+
+function drawAirmail(ctx, b) {
+  ctx.setFillColor(col(PAPER));
+  ctx.fillRect(new Rect(0, 0, W, H));
+  const sw = 38, colors = [ROSE, PAPER, BLUSH, PAPER];
+  let i = 0;
+  for (let x = -H; x < W + sw; x += sw, i++) {
+    const p = new Path();
+    p.addLines([new Point(x, 0), new Point(x + sw, 0), new Point(x + sw + H, H), new Point(x + H, H)]);
+    p.closeSubpath();
+    ctx.addPath(p);
+    ctx.setFillColor(col(colors[i % 4]));
+    ctx.fillPath();
+  }
+  // paper on top of the stripes
+  ctx.setFillColor(col(PAPER));
+  ctx.fillRect(new Rect(b, b, W - 2 * b, H - 2 * b));
+  // thin keyline
+  ctx.setStrokeColor(col(ROSE, 0.35));
+  ctx.setLineWidth(2);
+  ctx.strokeRect(new Rect(b + 12, b + 12, W - 2 * b - 24, H - 2 * b - 24));
+}
+
+function sizeFor(text, special) {
   const n = text.length;
-  if (n <= 25) return 76;
-  if (n <= 50) return 62;
-  if (n <= 90) return 50;
-  return 42;
+  const base = n <= 25 ? 72 : n <= 50 ? 56 : n <= 90 ? 45 : 37;
+  return special ? base + 4 : base;
 }
 function estimateHeight(text, size, width) {
-  const perLine = Math.max(1, Math.floor(width / (size * 0.55)));
-  return Math.ceil(text.length / perLine) * size * 1.22;
+  const perLine = Math.max(1, Math.floor(width / (size * 0.5)));
+  return Math.ceil(text.length / perLine) * size * 1.25;
 }
 
 function renderCard(entry) {
@@ -118,36 +185,35 @@ function renderCard(entry) {
   ctx.opaque = true;
   ctx.respectScreenScale = false;
 
-  for (let yy = 0; yy < H; yy += 4) {
-    const t = yy / H;
-    ctx.setFillColor(new Color(hex(TOP_COLOR.map((v, i) => v + (BOTTOM_COLOR[i] - v) * t))));
-    ctx.fillRect(new Rect(0, yy, W, 5));
-  }
+  const b = 30;
+  drawAirmail(ctx, b);
 
-  ctx.addPath(heartPath(70, 125, 300, 270));
-  ctx.setFillColor(HEART_COLOR);
-  ctx.fillPath();
+  drawSeal(ctx, 215, 262, 120);
 
-  const tx = 430, tw = W - tx - 60;
-  ctx.setTextColor(TEXT_COLOR);
-  ctx.setTextAlignedLeft();
-  const size = sizeFor(entry.text);
+  // writing
+  const tx = 404, tw = W - b - 46 - tx;
+  const size = sizeFor(entry.text, entry.special);
   const bodyH = estimateHeight(entry.text, size, tw);
-  const leadSize = 48, leadH = entry.special ? 0 : leadSize * 1.3;
-  let y = Math.max(40, (H - (leadH + bodyH)) / 2);
+  const leadSize = 76, leadH = entry.special ? 0 : leadSize * 1.05;
+  const sigH = CONFIG.herName ? 40 : 0;
+  let y = Math.max(b + 30, (H - (leadH + bodyH + sigH)) / 2 - 6);
 
+  ctx.setTextAlignedLeft();
   if (!entry.special) {
-    ctx.setFont(Font.mediumRoundedSystemFont(leadSize));
-    ctx.drawTextInRect("I love", new Rect(tx, y, tw, leadH));
+    ctx.setFont(SCRIPT(leadSize));
+    ctx.setTextColor(col(INK_RED));
+    ctx.drawTextInRect("I love", new Rect(tx, y - 8, tw, leadH + 20));
     y += leadH;
   }
-  ctx.setFont(Font.boldRoundedSystemFont(size));
-  ctx.drawTextInRect(entry.text, new Rect(tx, y, tw, H - y - 50));
+  ctx.setFont(SERIF(size));
+  ctx.setTextColor(col(INK));
+  ctx.drawTextInRect(entry.text, new Rect(tx, y, tw, H - b - 50 - y));
 
   if (CONFIG.herName) {
-    ctx.setFont(Font.mediumRoundedSystemFont(30));
+    ctx.setFont(SCRIPT(42));
+    ctx.setTextColor(col(INK_RED));
     ctx.setTextAlignedRight();
-    ctx.drawTextInRect("for " + CONFIG.herName, new Rect(tx, H - 62, tw, 40));
+    ctx.drawTextInRect("for " + CONFIG.herName, new Rect(tx, H - b - 78, tw, 56));
   }
   return ctx.getImage();
 }
@@ -187,7 +253,7 @@ async function showApp(now) {
   const state = loadState(key);
   const table = new UITable();
   table.showSeparators = false;
-  const BG = new Color("#FFF0F5");
+  const BG = new Color("#F7E4E6");
 
   const row = (h) => { const r = new UITableRow(); r.height = h; r.backgroundColor = BG; return r; };
 

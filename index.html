@@ -8,97 +8,204 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Remote Love">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#FFF0F5">
+<meta name="theme-color" content="#F7E4E6">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
 <link rel="manifest" href="manifest.json">
+<link rel="preload" href="fonts/PinyonScript-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/CormorantGaramond-Italic.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  @font-face {
+    font-family: "Pinyon Script";
+    src: url("fonts/PinyonScript-Regular.woff2") format("woff2");
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Cormorant Garamond";
+    src: url("fonts/CormorantGaramond-Italic.woff2") format("woff2");
+    font-style: italic; font-weight: 300 700;
+    font-display: swap;
+  }
+
   :root {
-    --bg: #FFF0F5;
-    --top: #FF8FB1;
-    --bottom: #E0457B;
-    --ink: #B8285E;
+    --page:   #F7E4E6;
+    --paper:  #FFF8EE;
+    --rose:   #C8385C;
+    --blush:  #F4B6C2;
+    --seal:   #8E1B3A;
+    --ink:    #5A1A2E;
+    --inkred: #B0284F;
+    --script: "Pinyon Script", "Snell Roundhand", cursive;
+    --serif:  "Cormorant Garamond", Georgia, serif;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; height: 100%; }
+  html, body { margin: 0; min-height: 100%; }
   body {
-    background: var(--bg);
-    font-family: ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif;
+    background-color: var(--page);
+    background-image:
+      radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, .7), transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cpath d='M16 14c0-3-2.5-5-5-5s-5 2.2-5 5c0 4.5 5 7.5 10 11 5-3.5 10-6.5 10-11 0-2.8-2.5-5-5-5s-5 2-5 5z' fill='%23C8385C' fill-opacity='.07' transform='translate(4 4) scale(.8)'/%3E%3Cpath d='M16 14c0-3-2.5-5-5-5s-5 2.2-5 5c0 4.5 5 7.5 10 11 5-3.5 10-6.5 10-11 0-2.8-2.5-5-5-5s-5 2-5 5z' fill='%23C8385C' fill-opacity='.05' transform='translate(36 34) scale(.6) rotate(-12 16 16)'/%3E%3C/svg%3E");
+    color: var(--ink);
+    font-family: var(--serif);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 28px; padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+    min-height: 100vh; min-height: 100dvh;
+    padding: calc(28px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+    gap: 22px;
   }
 
-  /* Card: same proportions and layout as the medium widget */
-  .card {
-    container-type: inline-size;
-    width: min(100%, 520px);
-    aspect-ratio: 1100 / 520;
-    border-radius: 22px;
-    background: linear-gradient(180deg, var(--top), var(--bottom));
-    box-shadow: 0 10px 30px rgba(224, 69, 123, .3);
-    position: relative; overflow: hidden; color: #fff;
+  .greeting {
+    font-family: var(--script); color: var(--inkred);
+    font-size: clamp(34px, 10vw, 46px); line-height: 1; margin: 0;
   }
-  .heart { position: absolute; left: 6.4%; top: 24%; width: 27.3%; fill: #fff; }
-  .text {
-    position: absolute; left: 39%; right: 5.5%; top: 0; bottom: 0;
+
+  /* ---------- The letter (same layout as the widget) ---------- */
+  .stage { width: min(100%, 540px); perspective: 1200px; }
+  .letter {
+    container-type: inline-size;
+    position: relative; width: 100%; aspect-ratio: 1100 / 520;
+    border-radius: 14px; overflow: hidden;
+    background: repeating-linear-gradient(-45deg,
+      var(--rose) 0 3.4%, var(--paper) 3.4% 6.8%, var(--blush) 6.8% 10.2%, var(--paper) 10.2% 13.6%);
+    background-size: 100% 100%;
+    box-shadow: 0 1px 2px rgba(90, 26, 46, .12), 0 14px 34px -8px rgba(142, 27, 58, .35);
+    transform-origin: 50% 50%;
+  }
+  .paper {
+    position: absolute; inset: 2.75cqw;
+    background:
+      radial-gradient(ellipse at 30% 20%, #FFFCF6, transparent 70%),
+      var(--paper);
+    border-radius: 3px;
+  }
+  .paper::after {   /* thin keyline */
+    content: ""; position: absolute; inset: 1.1cqw;
+    border: 1px solid rgba(200, 56, 92, .35);
+  }
+  .seal { position: absolute; left: 8.2%; top: 27%; width: 23.5%; overflow: visible; }
+  .writing {
+    position: absolute; left: 36.7%; right: 7%; top: 8%; bottom: 8%;
     display: flex; flex-direction: column; justify-content: center;
   }
-  .lead { font-size: 4.4cqw; font-weight: 500; line-height: 1.3; }
-  .body { font-weight: 700; line-height: 1.15; }
-  .name {
-    position: absolute; right: 5.5%; bottom: 4%;
-    font-size: 2.7cqw; font-weight: 500;
+  .lead {
+    font-family: var(--script); color: var(--inkred);
+    font-size: 8cqw; line-height: 1; margin-bottom: .4cqw;
+  }
+  .body {
+    font-family: var(--serif); font-style: italic; font-weight: 500;
+    color: var(--ink); line-height: 1.12; text-wrap: pretty;
+  }
+  .sig {
+    position: absolute; right: 7.5%; bottom: 10%;
+    font-family: var(--script); color: var(--inkred); font-size: 4.6cqw;
   }
 
-  .buttons { display: flex; flex-direction: column; gap: 12px; width: min(100%, 320px); }
-  button {
-    font: inherit; font-size: 18px; font-weight: 600;
-    border: 0; border-radius: 999px; padding: 15px 20px; cursor: pointer;
-    background: #fff; color: var(--ink); box-shadow: 0 2px 10px rgba(184, 40, 94, .15);
+  .countdown {
+    margin: 0; font-size: 15px; letter-spacing: .1em; text-transform: uppercase;
+    font-style: italic; color: var(--inkred); opacity: .8; text-align: center;
   }
-  button.primary { background: var(--bottom); color: #fff; }
+
+  /* ---------- Buttons ---------- */
+  .buttons { display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(100%, 330px); }
+  button { font: inherit; cursor: pointer; border: 0; }
+  .btn-love {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 16px 22px; border-radius: 999px;
+    background: radial-gradient(circle at 30% 25%, #A8284A, var(--seal) 70%);
+    color: #FFF3F0; font-size: 22px; font-style: italic; font-weight: 600; letter-spacing: .01em;
+    box-shadow: 0 2px 0 #5E0F25, 0 10px 22px -8px rgba(94, 15, 37, .6);
+    transition: transform .12s ease;
+  }
+  .btn-love svg { width: 22px; height: 20px; fill: #F4B6C2; }
+  .btn-respin {
+    background: none; color: var(--inkred); font-size: 20px; font-style: italic; font-weight: 600;
+    padding: 10px 18px; border-radius: 999px;
+  }
+  .btn-respin span { display: inline-block; transition: transform .5s ease; }
+  .btn-respin:active span { transform: rotate(-180deg); }
+  .btn-love:active { transform: translateY(1px) scale(.98); }
   [hidden] { display: none !important; }
 
-  /* Bottom sheets */
+  /* ---------- Bottom sheets (stationery) ---------- */
   .scrim {
-    position: fixed; inset: 0; background: rgba(60, 10, 30, .35);
+    position: fixed; inset: 0; background: rgba(60, 10, 30, .38);
     display: flex; align-items: flex-end; justify-content: center;
+    animation: fade .2s ease;
   }
   .sheet {
-    background: var(--bg); width: min(100%, 520px);
-    border-radius: 22px 22px 0 0; padding: 22px 16px calc(22px + env(safe-area-inset-bottom));
-    display: flex; flex-direction: column; gap: 12px;
+    position: relative; width: min(100%, 540px);
+    background: var(--paper); border-radius: 22px 22px 0 0; overflow: hidden;
+    padding: 30px 18px calc(22px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: 10px;
+    animation: rise .28s cubic-bezier(.2, .8, .2, 1);
   }
-  .sheet h2 { margin: 0 0 4px; text-align: center; color: var(--ink); font-size: 18px; }
-  .sheet img { width: 100%; max-height: 50vh; object-fit: contain; border-radius: 14px; }
-  .hint { text-align: center; color: var(--ink); font-size: 14px; margin: 0; }
+  .sheet::before {   /* airmail edge */
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 9px;
+    background: repeating-linear-gradient(-45deg,
+      var(--rose) 0 12px, var(--paper) 12px 24px, var(--blush) 24px 36px, var(--paper) 36px 48px);
+  }
+  .sheet h2 {
+    margin: 0 0 6px; text-align: center; font-family: var(--script); font-weight: 400;
+    color: var(--inkred); font-size: 40px; line-height: 1.1;
+  }
+  .option {
+    padding: 16px 18px; border-radius: 14px; text-align: left;
+    background: #FFF; color: var(--ink); font-size: 21px; font-style: italic; font-weight: 600;
+    border: 1px solid rgba(200, 56, 92, .22);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .option .ico { font-style: normal; font-size: 22px; }
+  .cancel { background: none; color: var(--inkred); font-size: 19px; font-style: italic; padding: 10px; }
+  .sheet img {
+    width: 100%; max-height: 48vh; object-fit: contain; border-radius: 8px;
+    background: #fff; padding: 8px; box-shadow: 0 6px 18px -6px rgba(90, 26, 46, .35);
+  }
+  .hint { text-align: center; color: var(--inkred); font-size: 17px; font-style: italic; margin: 2px 0 0; }
+
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes rise { from { transform: translateY(40px); opacity: 0; } }
+  @keyframes arrive {
+    from { transform: translateY(26px) rotate(-2.5deg); opacity: 0; }
+    to   { transform: none; opacity: 1; }
+  }
+  .letter.arrive { animation: arrive .7s cubic-bezier(.2, .8, .2, 1) both; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
 
-<div class="card" id="card">
-  <svg class="heart" viewBox="0 0 100 90" aria-hidden="true">
-    <path d="M50,25 C50,10 35,0 25,0 C10,0 0,12 0,27 C0,50 25,65 50,90 C75,65 100,50 100,27 C100,12 90,0 75,0 C65,0 50,10 50,25 Z"/>
-  </svg>
-  <div class="text">
-    <div class="lead" id="lead">I love</div>
-    <div class="body" id="body"></div>
+<p class="greeting" id="greeting">a little note for you</p>
+
+<div class="stage">
+  <div class="letter arrive" id="letter">
+    <div class="paper"></div>
+    <svg class="seal" id="seal" viewBox="0 0 300 300" aria-hidden="true"></svg>
+    <div class="writing">
+      <div class="lead" id="lead">I love</div>
+      <div class="body" id="body"></div>
+    </div>
+    <div class="sig" id="sig"></div>
   </div>
-  <div class="name" id="name"></div>
 </div>
 
+<p class="countdown" id="countdown"></p>
+
 <div class="buttons">
-  <button id="respin">🔄 Respin</button>
-  <button id="love" class="primary">💌 Send love back</button>
+  <button class="btn-love" id="love">
+    <svg viewBox="0 0 100 90" aria-hidden="true"><path d="M50,25 C50,10 35,0 25,0 C10,0 0,12 0,27 C0,50 25,65 50,90 C75,65 100,50 100,27 C100,12 90,0 75,0 C65,0 50,10 50,25 Z"/></svg>
+    Send love back
+  </button>
+  <button class="btn-respin" id="respin"><span>↻</span> Respin</button>
 </div>
 
 <!-- Choose camera or library -->
 <div class="scrim" id="chooser" hidden>
   <div class="sheet">
     <h2>Send love back</h2>
-    <button id="takePic">Take me a picture of my beautiful girlfriend</button>
-    <button id="findPic">Find me a photo of my gorgeous girlfriend</button>
-    <button id="cancelChoose">Cancel</button>
+    <button class="option" id="takePic"><span class="ico">📷</span>Take me a picture of my beautiful girlfriend</button>
+    <button class="option" id="findPic"><span class="ico">🖼️</span>Find me a photo of my gorgeous girlfriend</button>
+    <button class="cancel" id="cancelChoose">Cancel</button>
   </div>
 </div>
 
@@ -106,9 +213,12 @@
 <div class="scrim" id="preview" hidden>
   <div class="sheet">
     <img id="previewImg" alt="Your photo">
-    <button id="sendIt" class="primary">Send it 💌</button>
+    <button class="btn-love" id="sendIt">
+      <svg viewBox="0 0 100 90" aria-hidden="true"><path d="M50,25 C50,10 35,0 25,0 C10,0 0,12 0,27 C0,50 25,65 50,90 C75,65 100,50 100,27 C100,12 90,0 75,0 C65,0 50,10 50,25 Z"/></svg>
+      Send it
+    </button>
     <p class="hint" id="shareHint">Pick Messages, then pick him 💕</p>
-    <button id="cancelSend">Cancel</button>
+    <button class="cancel" id="cancelSend">Cancel</button>
   </div>
 </div>
 
@@ -119,7 +229,37 @@
 <script>
 (function () {
   const TZ = "America/Chicago", SWITCH_HOUR = 22, HOUR = 3600 * 1000;
+  const LAST_KEY = "2026-12-24";
+  const $ = (id) => document.getElementById(id);
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // ---------- Wax seal (same shape as the widget) ----------
+  (function drawSeal() {
+    const HEART = "M50,25 C50,10 35,0 25,0 C10,0 0,12 0,27 C0,50 25,65 50,90 C75,65 100,50 100,27 C100,12 90,0 75,0 C65,0 50,10 50,25 Z";
+    const wax = (cx, cy, r) => {
+      let d = "";
+      for (let k = 0; k < 72; k++) {
+        const a = (k / 72) * Math.PI * 2;
+        const rr = r * (1 + 0.045 * Math.sin(a * 7 + 0.6) + 0.025 * Math.cos(a * 13) + 0.015 * Math.sin(a * 23));
+        d += (k ? "L" : "M") + (cx + rr * Math.cos(a)).toFixed(1) + "," + (cy + rr * Math.sin(a)).toFixed(1);
+      }
+      return d + "Z";
+    };
+    const r = 120, cx = 150, cy = 150, hw = r * 0.9, hh = hw * 0.9;
+    const heartAt = (x, y, fill) =>
+      `<path d="${HEART}" fill="${fill}" transform="translate(${x} ${y}) scale(${hw / 100} ${hh / 90})"/>`;
+    $("seal").innerHTML =
+      `<defs><radialGradient id="w" cx="35%" cy="30%" r="75%">
+         <stop offset="0" stop-color="#A62A4C"/><stop offset="1" stop-color="#7E1532"/>
+       </radialGradient></defs>
+       <path d="${wax(cx + 5, cy + 8, r)}" fill="#5E0F25"/>
+       <path d="${wax(cx, cy, r)}" fill="url(#w)"/>
+       <circle cx="${cx}" cy="${cy}" r="${r * 0.74}" fill="none" stroke="#B23C5C" stroke-width="5"/>
+       ${heartAt(cx - hw / 2 + 3, cy - hh / 2 + 6, "#5E0F25")}
+       ${heartAt(cx - hw / 2, cy - hh / 2 + 2, "#B23C5C")}`;
+  })();
+
+  // ---------- Which day is showing ----------
   function centralWallClockMs(now) {
     const parts = new Intl.DateTimeFormat("en-US", {
       timeZone: TZ, hourCycle: "h23",
@@ -144,23 +284,19 @@
   }
 
   // Respin state per day (falls back to memory if storage is blocked)
-  let mem = {};
+  const mem = {};
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return mem[k] ?? null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) { mem[k] = v; } },
   };
 
-  const $ = (id) => document.getElementById(id);
-  let key;
-
-  function sizeFor(text) {        // same steps as the widget, in container units
+  function sizeFor(text, special) {   // container units; tuned for Cormorant
     const n = text.length;
-    if (n <= 25) return 6.9;
-    if (n <= 50) return 5.6;
-    if (n <= 90) return 4.5;
-    return 3.8;
+    const base = n <= 25 ? 7.6 : n <= 50 ? 6.1 : n <= 90 ? 5.0 : 4.2;
+    return special ? base + 0.5 : base;
   }
 
+  let key;
   function render() {
     key = currentKey(new Date());
     const e = COMPLIMENTS[key];
@@ -170,26 +306,49 @@
 
     $("lead").hidden = special;
     $("body").textContent = text;
-    $("body").style.fontSize = sizeFor(text) + "cqw";
+    $("body").style.fontSize = sizeFor(text, special) + "cqw";
     $("respin").hidden = special;
-    $("name").textContent = CONFIG.herName ? "for " + CONFIG.herName : "";
+    $("sig").textContent = CONFIG.herName ? "for " + CONFIG.herName : "";
+    $("greeting").textContent = CONFIG.herName ? "my dearest " + CONFIG.herName : "a little note for you";
     if (CONFIG.fromName) $("shareHint").textContent = "Pick Messages, then pick " + CONFIG.fromName + " 💕";
+
+    const left = Object.keys(COMPLIMENTS).filter((k) => k > key && k <= LAST_KEY).length;
+    $("countdown").textContent =
+      key >= LAST_KEY ? "" : left === 1 ? "one more letter before Christmas" : left + " more letters before Christmas";
   }
 
   function scheduleSwitch() {
     setTimeout(() => { render(); scheduleSwitch(); }, msUntilSwitch(new Date()) + 2000);
   }
 
-  $("respin").onclick = () => {
+  // Flip the letter over to reveal the other compliment
+  let flipping = false;
+  $("respin").onclick = async () => {
+    if (flipping) return;
+    flipping = true;
     const k = "respin-" + key;
+    const letter = $("letter");
+    letter.classList.remove("arrive");
+    if (!reduceMotion) {
+      await letter.animate(
+        [{ transform: "rotateY(0)" }, { transform: "rotateY(90deg)" }],
+        { duration: 220, easing: "ease-in", fill: "forwards" }).finished;
+    }
     store.set(k, store.get(k) === "1" ? "0" : "1");
     render();
+    if (!reduceMotion) {
+      await letter.animate(
+        [{ transform: "rotateY(-90deg)" }, { transform: "rotateY(0)" }],
+        { duration: 300, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" }).finished;
+    }
+    flipping = false;
   };
 
-  // ----- Send love back -----
+  // ---------- Send love back ----------
   let pickedFile = null, previewUrl = null;
   $("love").onclick = () => { $("chooser").hidden = false; };
   $("cancelChoose").onclick = () => { $("chooser").hidden = true; };
+  $("chooser").onclick = (e) => { if (e.target === $("chooser")) $("chooser").hidden = true; };
   $("takePic").onclick = () => { $("chooser").hidden = true; $("cameraInput").click(); };
   $("findPic").onclick = () => { $("chooser").hidden = true; $("libraryInput").click(); };
 
@@ -216,7 +375,6 @@
         $("preview").hidden = true;
       } catch (e) { /* she closed the share sheet */ }
     } else {
-      // No file sharing (e.g. desktop browsers)
       alert("Sharing photos isn't supported here. Open this on your iPhone in Safari.");
     }
   };
