@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Remote Love</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Remote Love">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FFF0F5">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root {
+    --bg: #FFF0F5;
+    --top: #FF8FB1;
+    --bottom: #E0457B;
+    --ink: #B8285E;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    font-family: ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 28px; padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  /* Card: same proportions and layout as the medium widget */
+  .card {
+    container-type: inline-size;
+    width: min(100%, 520px);
+    aspect-ratio: 1100 / 520;
+    border-radius: 22px;
+    background: linear-gradient(180deg, var(--top), var(--bottom));
+    box-shadow: 0 10px 30px rgba(224, 69, 123, .3);
+    position: relative; overflow: hidden; color: #fff;
+  }
+  .heart { position: absolute; left: 6.4%; top: 24%; width: 27.3%; fill: #fff; }
+  .text {
+    position: absolute; left: 39%; right: 5.5%; top: 0; bottom: 0;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .lead { font-size: 4.4cqw; font-weight: 500; line-height: 1.3; }
+  .body { font-weight: 700; line-height: 1.15; }
+  .name {
+    position: absolute; right: 5.5%; bottom: 4%;
+    font-size: 2.7cqw; font-weight: 500;
+  }
+
+  .buttons { display: flex; flex-direction: column; gap: 12px; width: min(100%, 320px); }
+  button {
+    font: inherit; font-size: 18px; font-weight: 600;
+    border: 0; border-radius: 999px; padding: 15px 20px; cursor: pointer;
+    background: #fff; color: var(--ink); box-shadow: 0 2px 10px rgba(184, 40, 94, .15);
+  }
+  button.primary { background: var(--bottom); color: #fff; }
+  [hidden] { display: none !important; }
+
+  /* Bottom sheets */
+  .scrim {
+    position: fixed; inset: 0; background: rgba(60, 10, 30, .35);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .sheet {
+    background: var(--bg); width: min(100%, 520px);
+    border-radius: 22px 22px 0 0; padding: 22px 16px calc(22px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .sheet h2 { margin: 0 0 4px; text-align: center; color: var(--ink); font-size: 18px; }
+  .sheet img { width: 100%; max-height: 50vh; object-fit: contain; border-radius: 14px; }
+  .hint { text-align: center; color: var(--ink); font-size: 14px; margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="card" id="card">
+  <svg class="heart" viewBox="0 0 100 90" aria-hidden="true">
+    <path d="M50,25 C50,10 35,0 25,0 C10,0 0,12 0,27 C0,50 25,65 50,90 C75,65 100,50 100,27 C100,12 90,0 75,0 C65,0 50,10 50,25 Z"/>
+  </svg>
+  <div class="text">
+    <div class="lead" id="lead">I love</div>
+    <div class="body" id="body"></div>
+  </div>
+  <div class="name" id="name"></div>
+</div>
+
+<div class="buttons">
+  <button id="respin">🔄 Respin</button>
+  <button id="love" class="primary">💌 Send love back</button>
+</div>
+
+<!-- Choose camera or library -->
+<div class="scrim" id="chooser" hidden>
+  <div class="sheet">
+    <h2>Send love back</h2>
+    <button id="takePic">Take me a picture of my beautiful girlfriend</button>
+    <button id="findPic">Find me a photo of my gorgeous girlfriend</button>
+    <button id="cancelChoose">Cancel</button>
+  </div>
+</div>
+
+<!-- Preview + send -->
+<div class="scrim" id="preview" hidden>
+  <div class="sheet">
+    <img id="previewImg" alt="Your photo">
+    <button id="sendIt" class="primary">Send it 💌</button>
+    <p class="hint" id="shareHint">Pick Messages, then pick him 💕</p>
+    <button id="cancelSend">Cancel</button>
+  </div>
+</div>
+
+<input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+<input type="file" id="libraryInput" accept="image/*" hidden>
+
+<script src="compliments.js"></script>
+<script>
+(function () {
+  const TZ = "America/Chicago", SWITCH_HOUR = 22, HOUR = 3600 * 1000;
+
+  function centralWallClockMs(now) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: TZ, hourCycle: "h23",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+    }).formatToParts(now);
+    const get = (t) => parseInt(parts.find((p) => p.type === t).value, 10);
+    return Date.UTC(get("year"), get("month") - 1, get("day"),
+                    get("hour") % 24, get("minute"), get("second"));
+  }
+  function currentKey(now) {
+    const shifted = centralWallClockMs(now) + (24 - SWITCH_HOUR) * HOUR;
+    let key = new Date(shifted).toISOString().slice(0, 10);
+    const keys = Object.keys(COMPLIMENTS).sort();
+    if (key < keys[0]) key = keys[0];
+    if (key > keys[keys.length - 1]) key = keys[keys.length - 1];
+    return key;
+  }
+  function msUntilSwitch(now) {
+    const shifted = centralWallClockMs(now) + (24 - SWITCH_HOUR) * HOUR;
+    return 24 * HOUR - (shifted % (24 * HOUR));
+  }
+
+  // Respin state per day (falls back to memory if storage is blocked)
+  let mem = {};
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return mem[k] ?? null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { mem[k] = v; } },
+  };
+
+  const $ = (id) => document.getElementById(id);
+  let key;
+
+  function sizeFor(text) {        // same steps as the widget, in container units
+    const n = text.length;
+    if (n <= 25) return 6.9;
+    if (n <= 50) return 5.6;
+    if (n <= 90) return 4.5;
+    return 3.8;
+  }
+
+  function render() {
+    key = currentKey(new Date());
+    const e = COMPLIMENTS[key];
+    const special = !Array.isArray(e);
+    const second = store.get("respin-" + key) === "1";
+    const text = special ? e.special : (second ? e[1] : e[0]);
+
+    $("lead").hidden = special;
+    $("body").textContent = text;
+    $("body").style.fontSize = sizeFor(text) + "cqw";
+    $("respin").hidden = special;
+    $("name").textContent = CONFIG.herName ? "for " + CONFIG.herName : "";
+    if (CONFIG.fromName) $("shareHint").textContent = "Pick Messages, then pick " + CONFIG.fromName + " 💕";
+  }
+
+  function scheduleSwitch() {
+    setTimeout(() => { render(); scheduleSwitch(); }, msUntilSwitch(new Date()) + 2000);
+  }
+
+  $("respin").onclick = () => {
+    const k = "respin-" + key;
+    store.set(k, store.get(k) === "1" ? "0" : "1");
+    render();
+  };
+
+  // ----- Send love back -----
+  let pickedFile = null, previewUrl = null;
+  $("love").onclick = () => { $("chooser").hidden = false; };
+  $("cancelChoose").onclick = () => { $("chooser").hidden = true; };
+  $("takePic").onclick = () => { $("chooser").hidden = true; $("cameraInput").click(); };
+  $("findPic").onclick = () => { $("chooser").hidden = true; $("libraryInput").click(); };
+
+  function onPicked(ev) {
+    const f = ev.target.files && ev.target.files[0];
+    ev.target.value = "";
+    if (!f) return;
+    pickedFile = f;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = URL.createObjectURL(f);
+    $("previewImg").src = previewUrl;
+    $("preview").hidden = false;
+  }
+  $("cameraInput").onchange = onPicked;
+  $("libraryInput").onchange = onPicked;
+  $("cancelSend").onclick = () => { $("preview").hidden = true; };
+
+  $("sendIt").onclick = async () => {
+    const name = pickedFile.name && pickedFile.name.includes(".") ? pickedFile.name : "love.jpg";
+    const file = new File([pickedFile], name, { type: pickedFile.type || "image/jpeg" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        $("preview").hidden = true;
+      } catch (e) { /* she closed the share sheet */ }
+    } else {
+      // No file sharing (e.g. desktop browsers)
+      alert("Sharing photos isn't supported here. Open this on your iPhone in Safari.");
+    }
+  };
+
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+  render();
+  scheduleSwitch();
+})();
+</script>
+</body>
+</html>
