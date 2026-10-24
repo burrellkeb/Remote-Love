@@ -1,18 +1,9 @@
-# Remote Love
+# 1. Remote Love
 
 A daily "I love…" compliment, switching at 10 PM Central, through Dec 24.
 
-- `compliments.js` is **the only file to edit**: compliments, her name, and your number.
 - `widget.js` is the home-screen widget, run by Scriptable.
 - `index.html` is the web-app version and fallback. It also lets you preview the design on your computer.
-
-## 1. Publish (you)
-
-1. Create a **public** repo named `remote-love` and push these files to it.
-2. In the repo, go to **Settings → Pages → Source: Deploy from a branch → `main` / root**.
-3. After a minute, check that `https://burrellkeb.github.io/remote-love/` loads.
-
-Whenever you edit `compliments.js` later, commit and push. Her widget picks up the change within about 10 minutes.
 
 ## 2. Widget setup (her)
 
