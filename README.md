@@ -12,7 +12,7 @@ A daily "I love…" compliment, switching at 10 PM Central, through Dec 24.
 3. Paste this one line and tap **Done**:
 
 ```js
-const B="https://burrellkeb.github.io/remote-love/",f=FileManager.local(),p=f.joinPath(f.documentsDirectory(),"rl-widget.js");let c=null,why="";try{const r=new Request(B+"widget.js?t="+Date.now()),t=await r.loadString();if(r.response.statusCode==200&&t.startsWith("//"))f.writeString(p,c=t);else why="HTTP "+r.response.statusCode}catch(e){why=String(e)}if(!c&&f.fileExists(p))c=f.readString(p);if(!c)throw new Error("Couldn't load "+B+"widget.js - "+why);await eval(c)(B)
+const B="https://burrellkeb.github.io/Remote-Love/",f=FileManager.local(),p=f.joinPath(f.documentsDirectory(),"rl-widget.js");let c=null,why="";try{const r=new Request(B+"widget.js?t="+Date.now()),t=await r.loadString();if(r.response.statusCode==200&&t.startsWith("//"))f.writeString(p,c=t);else why="HTTP "+r.response.statusCode}catch(e){why=String(e)}if(!c&&f.fileExists(p))c=f.readString(p);if(!c)throw new Error("Couldn't load "+B+"widget.js - "+why);await eval(c)(B)
 ```
 
 4. Tap ▶︎ once. This opens the Respin / Send love back screen and confirms it works.
