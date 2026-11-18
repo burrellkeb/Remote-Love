@@ -123,7 +123,32 @@
   .btn-respin span { display: inline-block; transition: transform .5s ease; }
   .btn-respin:active span { transform: rotate(-180deg); }
   .btn-love:active { transform: translateY(1px) scale(.98); }
+  .btn-past {
+    background: none; color: var(--inkred); font-size: 20px; font-style: italic; font-weight: 600;
+    padding: 6px 18px; border-radius: 999px;
+  }
   [hidden] { display: none !important; }
+
+  /* ---------- Past letters ---------- */
+  .sheet.tall { max-height: 86vh; max-height: 86dvh; padding-bottom: 0; }
+  .past-list {
+    overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 0 -18px; padding: 4px 18px 8px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .past-item {
+    background: #FFF; border: 1px solid rgba(200, 56, 92, .2); border-radius: 12px;
+    padding: 12px 16px 14px; box-shadow: 0 4px 12px -8px rgba(90, 26, 46, .35);
+  }
+  .past-date {
+    font-size: 14px; letter-spacing: .1em; text-transform: uppercase; font-style: italic;
+    color: var(--inkred); opacity: .85; margin-bottom: 4px;
+  }
+  .past-line { font-size: 20px; font-style: italic; font-weight: 500; line-height: 1.25; color: var(--ink); }
+  .past-line + .past-line { margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(200, 56, 92, .25); }
+  .past-line .il { font-family: var(--script); color: var(--inkred); font-size: 25px; font-style: normal; font-weight: 400; }
+  .past-empty { text-align: center; font-size: 20px; font-style: italic; color: var(--ink); padding: 24px 0; }
+  .sheet.tall .cancel { position: sticky; bottom: 0; background: var(--paper);
+    padding-bottom: calc(14px + env(safe-area-inset-bottom)); margin: 0 -18px; }
 
   /* ---------- Bottom sheets (stationery) ---------- */
   .scrim {
@@ -197,6 +222,16 @@
     Send love back
   </button>
   <button class="btn-respin" id="respin"><span>↻</span> Respin</button>
+  <button class="btn-past" id="past">📜 Past letters</button>
+</div>
+
+<!-- Past letters (only days that have already gone by) -->
+<div class="scrim" id="pastSheet" hidden>
+  <div class="sheet tall">
+    <h2>Past letters</h2>
+    <div class="past-list" id="pastList"></div>
+    <button class="cancel" id="closePast">Close</button>
+  </div>
 </div>
 
 <!-- Choose camera or library -->
@@ -343,6 +378,47 @@
     }
     flipping = false;
   };
+
+  // ---------- Past letters ----------
+  // Only dates BEFORE the one showing now: never today's respin or anything ahead.
+  function prettyDate(k) {
+    const [y, m, d] = k.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString("en-US",
+      { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+  }
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function openPast() {
+    key = currentKey(new Date());
+    const list = $("pastList");
+    list.replaceChildren();
+    const keys = Object.keys(COMPLIMENTS).filter((k) => k < key).sort().reverse();
+    if (!keys.length) list.append(el("div", "past-empty", "Your first letter is still on its way 💌"));
+    for (const k of keys) {
+      const e = COMPLIMENTS[k];
+      const item = el("div", "past-item");
+      item.append(el("div", "past-date", prettyDate(k)));
+      if (Array.isArray(e)) {
+        for (const c of e) {
+          const line = el("div", "past-line");
+          line.append(el("span", "il", "I love "), document.createTextNode(c));
+          item.append(line);
+        }
+      } else {
+        item.append(el("div", "past-line", e.special));
+      }
+      list.append(item);
+    }
+    list.scrollTop = 0;
+    $("pastSheet").hidden = false;
+  }
+  $("past").onclick = openPast;
+  $("closePast").onclick = () => { $("pastSheet").hidden = true; };
+  $("pastSheet").onclick = (e) => { if (e.target === $("pastSheet")) $("pastSheet").hidden = true; };
 
   // ---------- Send love back ----------
   let pickedFile = null, previewUrl = null;

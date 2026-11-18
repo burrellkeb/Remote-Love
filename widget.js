@@ -248,17 +248,34 @@ async function sendLoveBack() {
   await m.send();
 }
 
+// Only dates BEFORE the one showing now - never today's respin or anything ahead
+function pastKeys(key) {
+  return Object.keys(COMPLIMENTS).filter((k) => k < key).sort().reverse();
+}
+
+function prettyDate(k) {
+  const [y, m, d] = k.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString("en-US",
+    { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+}
+
+// Rough row height so long compliments wrap instead of getting cut off
+function textRowHeight(text) {
+  return 30 + Math.ceil(text.length / 34) * 24;
+}
+
 async function showApp(now) {
   const key = currentKey(now);
   const state = loadState(key);
   const table = new UITable();
   table.showSeparators = false;
   const BG = new Color("#F7E4E6");
+  let view = "main";
 
   const row = (h) => { const r = new UITableRow(); r.height = h; r.backgroundColor = BG; return r; };
+  const show = (v) => { view = v; build(); table.reload(); };
 
-  function build() {
-    table.removeAllRows();
+  function buildMain() {
     const entry = entryFor(key, state);
     table.addRow(row(70));
 
@@ -274,8 +291,7 @@ async function showApp(now) {
       b.onTap = () => {
         state.showSecond = !state.showSecond;
         saveState(state);
-        build();
-        table.reload();
+        show("main");
       };
       table.addRow(r);
     }
@@ -285,7 +301,65 @@ async function showApp(now) {
     b2.centerAligned();
     b2.onTap = () => { sendLoveBack(); };
     table.addRow(r2);
+
+    const r3 = row(60);
+    const b3 = r3.addButton("📜  Past letters");
+    b3.centerAligned();
+    b3.onTap = () => show("past");
+    table.addRow(r3);
+
     table.addRow(row(400));
+  }
+
+  function buildPast() {
+    const back = row(56);
+    const bb = back.addButton("←  Back");
+    bb.leftAligned();
+    bb.onTap = () => show("main");
+    table.addRow(back);
+
+    const title = row(70);
+    const t = title.addText("Past letters");
+    t.titleFont = new Font("SnellRoundhand-Bold", 38);
+    t.titleColor = new Color(INK_RED);
+    t.centerAligned();
+    table.addRow(title);
+
+    const keys = pastKeys(key);
+    if (keys.length === 0) {
+      const r = row(80);
+      const c = r.addText("Your first letter is still on its way 💌");
+      c.titleFont = new Font("Georgia-Italic", 17);
+      c.titleColor = new Color(INK);
+      c.centerAligned();
+      table.addRow(r);
+    }
+
+    for (const k of keys) {
+      const e = COMPLIMENTS[k];
+      const lines = Array.isArray(e) ? e.map((x) => "I love " + x) : [e.special];
+
+      const head = row(40);
+      const h = head.addText(prettyDate(k));
+      h.titleFont = new Font("Georgia-BoldItalic", 15);
+      h.titleColor = new Color(INK_RED);
+      table.addRow(head);
+
+      for (const line of lines) {
+        const r = row(textRowHeight(line));
+        const c = r.addText(line);
+        c.titleFont = new Font("Georgia-Italic", 19);
+        c.titleColor = new Color(INK);
+        table.addRow(r);
+      }
+      table.addRow(row(16));
+    }
+    table.addRow(row(120));
+  }
+
+  function build() {
+    table.removeAllRows();
+    if (view === "past") buildPast(); else buildMain();
   }
 
   build();
